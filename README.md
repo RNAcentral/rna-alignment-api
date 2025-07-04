@@ -1,52 +1,66 @@
-RNA Alignment API
+# RNA Alignment API
+
 A simple Flask API for serving RNA multiple sequence alignment data from Stockholm files.
-Installation
+
+## Installation
 
 Install dependencies:
 
-bashpip install flask flask-cors
+```bash
+pip install flask flask-cors
+```
 
-Make sure you have a Stockholm file (rf03116.sto) and the sto_parser module in your project directory.
+Make sure you have a Stockholm file (`rf03116.sto`) and the `sto_parser` module in your project directory.
 
-Usage
+## Usage
+
 Start the server:
-bashpython app.py
-The API will run on http://localhost:5000 by default.
-API Endpoints
-Get RNA Family Sequences
 
-URL: /family/{identifier}
-Method: GET
-Description: Returns RNA sequences in MSA component format
-Example: GET /family/RF03116
+```bash
+python app.py
+```
 
-Get Raw Sequences
+The API will run on `http://localhost:5000` by default.
 
-URL: /family/{identifier}/raw
-Method: GET
-Description: Returns sequences in raw JSON format
-Example: GET /family/RF03116/raw
+## API Endpoints
 
-Health Check
+### Get RNA Family Sequences
 
-URL: /health
-Method: GET
-Description: Check if the API is running and how many sequences are loaded
+- **URL:** `/family/{identifier}`
+- **Method:** GET
+- **Description:** Returns RNA sequences in MSA component format
+- **Example:** `GET /family/RF03116`
 
-Home
+### Get Raw Sequences
 
-URL: /
-Method: GET
-Description: API information and usage examples
+- **URL:** `/family/{identifier}/raw`
+- **Method:** GET
+- **Description:** Returns sequences in raw JSON format
+- **Example:** `GET /family/RF03116/raw`
 
-Configuration
+### Health Check
+
+- **URL:** `/health`
+- **Method:** GET
+- **Description:** Check if the API is running and how many sequences are loaded
+
+### Home
+
+- **URL:** `/`
+- **Method:** GET
+- **Description:** API information and usage examples
+
+## Configuration
+
 Set environment variables:
 
-PORT: Server port (default: 5000)
-DEBUG: Enable debug mode (default: False)
+- `PORT`: Server port (default: 5000)
+- `DEBUG`: Enable debug mode (default: False)
 
-Example Response
-json{
+## Example Response
+
+```json
+{
   "status": "success",
   "data": {
     "sequences": [...],
@@ -60,3 +74,4 @@ json{
   },
   "message": "Data loaded successfully"
 }
+```

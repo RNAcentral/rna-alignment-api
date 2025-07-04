@@ -1,6 +1,6 @@
 # RNA Alignment API
 
-A simple Flask API for serving RNA multiple sequence alignment data from Stockholm files.
+A Flask API for serving RNA multiple sequence alignment data from Stockholm files stored in S3.
 
 ## Installation
 
@@ -10,7 +10,17 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Make sure you have a Stockholm file (`rf03116.sto`) and the `sto_parser` module in your project directory.
+## Configuration
+
+Create a `.env` file in the project root with your S3 credentials:
+
+```
+S3_HOST=https://uk1s3.embassy.ebi.ac.uk
+S3_KEY=your_access_key
+S3_SECRET=your_secret_key
+```
+
+The API expects Stockholm files to be stored in the S3 bucket `ebi-rnacentral` under the path `dev/alignments/`.
 
 ## Usage
 
@@ -30,6 +40,7 @@ The API will run on `http://localhost:5000` by default.
 - **Method:** GET
 - **Description:** Returns RNA sequences in MSA component format
 - **Example:** `GET /family/RF03116`
+- **Note:** The identifier is converted to lowercase when fetching from S3 (e.g., `RF03116` → `rf03116.sto`)
 
 ### Get Raw Sequences
 
@@ -42,7 +53,7 @@ The API will run on `http://localhost:5000` by default.
 
 - **URL:** `/health`
 - **Method:** GET
-- **Description:** Check if the API is running and how many sequences are loaded
+- **Description:** Check if the API is running
 
 ### Home
 
@@ -50,12 +61,21 @@ The API will run on `http://localhost:5000` by default.
 - **Method:** GET
 - **Description:** API information and usage examples
 
-## Configuration
-
-Set environment variables:
+## Environment Variables
 
 - `PORT`: Server port (default: 5000)
 - `DEBUG`: Enable debug mode (default: False)
+- `S3_HOST`: S3 endpoint URL
+- `S3_KEY`: S3 access key
+- `S3_SECRET`: S3 secret key
+
+## Dependencies
+
+- Flask
+- Flask-CORS
+- Biopython
+- boto3
+- python-dotenv
 
 ## Example Response
 
@@ -63,11 +83,16 @@ Set environment variables:
 {
   "status": "success",
   "data": {
-    "sequences": [...],
+    "sequences": [
+      {
+        "name": "sequence_id",
+        "sequence": "ACGTACGT..."
+      }
+    ],
     "metadata": {
       "title": "RF03116 RNA Family",
       "description": "Multiple sequence alignment for RNA family RF03116",
-      "source": "Stockholm file: rf03116.sto",
+      "source": "S3: ebi-rnacentral/dev/alignments/rf03116.sto",
       "count": 42,
       "identifier": "RF03116"
     }
@@ -75,3 +100,18 @@ Set environment variables:
   "message": "Data loaded successfully"
 }
 ```
+
+## S3 File Structure
+
+The API expects files to be organized as follows:
+
+```
+ebi-rnacentral/
+└── dev/
+    └── alignments/
+        ├── rf00001.sto
+        ├── rf00002.sto
+        └── ...
+```
+
+Stockholm files should be in lowercase and follow the naming convention `{identifier}.sto`.

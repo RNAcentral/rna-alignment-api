@@ -1,14 +1,40 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 import os
-from sto_parser import parse_stockholm_file
+from utils.sto_parser import parse_stockholm_file
+import boto3
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
-# Sample data - you can replace this with your actual data source
-sto_file = 'rf03116.sto'
-sequence_data = parse_stockholm_file(sto_file)
+# Sample data - remove this since we're loading from S3 dynamically
+# sto_file = 'rf03116.sto'
+# sequence_data = parse_stockholm_file(sto_file)
+
+# Create S3 client
+s3_client = boto3.client(
+    's3',
+    endpoint_url=os.getenv('S3_HOST'),
+    aws_access_key_id=os.getenv('S3_KEY'),
+    aws_secret_access_key=os.getenv('S3_SECRET')
+)
+
+def get_sto_file_from_s3(identifier):
+    """
+    Get .sto file from S3 bucket ebi-rnacentral/dev/alignments/
+    """
+    bucket_name = 'ebi-rnacentral'
+    object_key = f'dev/alignments/{identifier.lower()}.sto'
+    
+    try:
+        response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
+        return response['Body'].read().decode('utf-8')
+    except Exception as e:
+        raise Exception(f"Failed to retrieve {object_key} from S3: {str(e)}")
 
 def format_msa_response(sequences, identifier):
     """
@@ -21,7 +47,7 @@ def format_msa_response(sequences, identifier):
             'metadata': {
                 'title': f'{identifier} RNA Family',
                 'description': f'Multiple sequence alignment for RNA family {identifier}',
-                'source': f'Stockholm file: {sto_file}',
+                'source': f'S3: ebi-rnacentral/dev/alignments/{identifier.lower()}.sto',
                 'count': len(sequences),
                 'identifier': identifier
             }
@@ -32,15 +58,21 @@ def format_msa_response(sequences, identifier):
 @app.route('/family/<identifier>', methods=['GET'])
 def get_sequences(identifier):
     """
-    Get sequences by identifier
+    Get sequences by identifier from S3 .sto file
     URL pattern: /family/{identifier}
     Returns: JSON in MSA component expected format
     """
     try:
+        # Get .sto file content from S3
+        sto_content = get_sto_file_from_s3(identifier)
+        
+        # Parse the Stockholm file content
+        sequence_data = parse_stockholm_file(sto_content)
+        
         if not sequence_data:
             return jsonify({
                 'status': 'error',
-                'message': 'No sequence data available',
+                'message': f'No sequence data found for identifier {identifier}',
                 'data': None
             }), 404
         
@@ -51,18 +83,32 @@ def get_sequences(identifier):
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Failed to retrieve sequences: {str(e)}',
+            'message': f'Failed to retrieve sequences for {identifier}: {str(e)}',
             'data': None
         }), 500
 
 @app.route('/family/<identifier>/raw', methods=['GET'])
 def get_sequences_raw(identifier):
     """
-    Get sequences in raw format (original behavior)
+    Get sequences in raw format from S3 .sto file
     URL pattern: /family/{identifier}/raw
     Returns: JSON array of sequence objects
     """
-    return jsonify(sequence_data)
+    try:
+        # Get .sto file content from S3
+        sto_content = get_sto_file_from_s3(identifier)
+        
+        # Parse the Stockholm file content
+        sequence_data = parse_stockholm_file(sto_content)
+        
+        return jsonify(sequence_data)
+    
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Failed to retrieve raw sequences for {identifier}: {str(e)}',
+            'data': None
+        }), 500
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -73,7 +119,7 @@ def health_check():
         'data': {
             'service': 'RNA Sequence API',
             'version': '1.0.0',
-            'sequences_loaded': len(sequence_data) if sequence_data else 0
+            'source': 'S3: ebi-rnacentral/dev/alignments/'
         }
     })
 

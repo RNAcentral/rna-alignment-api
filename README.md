@@ -7,7 +7,7 @@ A simple Flask API for serving RNA multiple sequence alignment data from Stockho
 Install dependencies:
 
 ```bash
-pip install flask flask-cors
+pip install -r requirements.txt
 ```
 
 Make sure you have a Stockholm file (`rf03116.sto`) and the `sto_parser` module in your project directory.

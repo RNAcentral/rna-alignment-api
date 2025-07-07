@@ -83,3 +83,26 @@ spec:
   - port: 80
     targetPort: 5000
     nodePort: 30080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rna-alignment-api-ingress
+  namespace: rna-alignment
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  rules:
+  - host: wwwdev.ebi.ac.uk/rfam  # Replace with your actual domain
+    http:
+      paths:
+      - path: /rna-alignment
+        pathType: Prefix
+        backend:
+          service:
+            name: rna-alignment-api-service
+            port:
+              number: 80

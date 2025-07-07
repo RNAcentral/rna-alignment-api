@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rna-api-secrets
+  namespace: rna-alignment
+type: Opaque
+stringData:
+  S3_HOST: {{ .Values.s3.host }}
+  S3_KEY: {{ .Values.s3.key }}
+  S3_SECRET: {{ .Values.s3.secret }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: github-registry-secret
+  namespace: rna-alignment
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: {{ printf "{\"auths\":{\"%s\":{\"username\":\"%s\",\"password\":\"%s\",\"auth\":\"%s\"}}}" .Values.imagePullSecrets.github.registry .Values.imagePullSecrets.github.username .Values.imagePullSecrets.github.password (printf "%s:%s" .Values.imagePullSecrets.github.username .Values.imagePullSecrets.github.password | b64enc) | b64enc }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rna-alignment-api
+  namespace: rna-alignment
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: rna-alignment-api
+  template:
+    metadata:
+      labels:
+        app: rna-alignment-api
+    spec:
+      imagePullSecrets:
+      - name: github-registry-secret
+      containers:
+      - name: rna-api
+        image: {{ .Values.image }}
+        ports:
+        - containerPort: 5000
+        env:
+        - name: http_proxy
+          value: "http://hh-wwwcache.ebi.ac.uk:3128"
+        - name: https_proxy
+          value: "http://hh-wwwcache.ebi.ac.uk:3128"
+        - name: no_proxy
+          value: "localhost,127.0.0.0/8,10.0.0.0/8,.cluster.local,.svc,.caas.ebi.ac.uk,.ebi.ac.uk"
+        - name: S3_HOST
+          valueFrom:
+            secretKeyRef:
+              name: rna-api-secrets
+              key: S3_HOST
+        - name: S3_KEY
+          valueFrom:
+            secretKeyRef:
+              name: rna-api-secrets
+              key: S3_KEY
+        - name: S3_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: rna-api-secrets
+              key: S3_SECRET
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rna-alignment-api-service
+  namespace: rna-alignment
+spec:
+  type: NodePort
+  selector:
+    app: rna-alignment-api
+  ports:
+  - port: 80
+    targetPort: 5000
+    nodePort: 30080

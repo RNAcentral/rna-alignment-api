@@ -109,8 +109,8 @@ The API expects files to be organized as follows:
 ebi-rnacentral/
 └── dev/
     └── alignments/
+        ├── rf03116.sto
         ├── rf00001.sto
-        ├── rf00002.sto
         └── ...
 ```
 

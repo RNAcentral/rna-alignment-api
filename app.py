@@ -3,17 +3,9 @@ from flask_cors import CORS
 import os
 from utils.sto_parser import parse_stockholm_file
 import boto3
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
-
-# Sample data - remove this since we're loading from S3 dynamically
-# sto_file = 'rf03116.sto'
-# sequence_data = parse_stockholm_file(sto_file)
 
 # Create S3 client
 s3_client = boto3.client(
@@ -115,12 +107,7 @@ def health_check():
     """Health check endpoint"""
     return jsonify({
         'status': 'success',
-        'message': 'API is running',
-        'data': {
-            'service': 'RNA Sequence API',
-            'version': '1.0.0',
-            'source': 'S3: ebi-rnacentral/dev/alignments/'
-        }
+        'message': 'API is running'
     })
 
 @app.route('/', methods=['GET'])
@@ -162,12 +149,5 @@ def internal_error(error):
     }), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
-    
-    print(f"Starting RNA Sequence API on port {port}")
-    print(f"MSA format: http://localhost:{port}/family/RF03116")
-    print(f"Raw format: http://localhost:{port}/family/RF03116/raw")
-    print(f"Health check: http://localhost:{port}/health")
-    
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)

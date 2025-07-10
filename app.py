@@ -83,28 +83,6 @@ def get_sequences(identifier):
             'data': None
         }), 500
 
-@app.route('/family/<identifier>/raw', methods=['GET'])
-def get_sequences_raw(identifier):
-    """
-    Get sequences in raw format from S3 .sto file
-    URL pattern: /family/{identifier}/raw
-    Returns: JSON array of sequence objects
-    """
-    try:
-        # Get .sto file content from S3
-        sto_content = get_sto_file_from_s3(identifier)
-        
-        # Parse the Stockholm file content
-        sequence_data = parse_stockholm_file(sto_content)
-        
-        return jsonify(sequence_data)
-    
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'message': f'Failed to retrieve raw sequences for {identifier}: {str(e)}',
-            'data': None
-        }), 500
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -123,12 +101,10 @@ def home():
         'data': {
             'endpoints': {
                 'sequences': '/family/{identifier}',
-                'raw_sequences': '/family/{identifier}/raw',
                 'health': '/health'
             },
             'examples': {
                 'msa_format': '/family/RF03116',
-                'raw_format': '/family/RF03116/raw'
             },
             'description': 'API for RNA multiple sequence alignment data'
         }

@@ -1,7 +1,6 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, Response
 from flask_cors import CORS
 import os
-from utils.sto_parser import parse_stockholm_file
 import boto3
 from dotenv import load_dotenv
 
@@ -32,54 +31,37 @@ def get_sto_file_from_s3(identifier):
     except Exception as e:
         raise Exception(f"Failed to retrieve {object_key} from S3: {str(e)}")
 
-def format_msa_response(sequences, identifier):
-    """
-    Format sequences into the expected MSA component format
-    """
-    return {
-        'status': 'success',
-        'data': {
-            'sequences': sequences,
-            'metadata': {
-                'title': f'{identifier} RNA Family',
-                'description': f'Multiple sequence alignment for RNA family {identifier}',
-                'source': f'S3: ebi-rnacentral/dev/alignments/{identifier.lower()}.sto',
-                'count': len(sequences),
-                'identifier': identifier
-            }
-        },
-        'message': 'Data loaded successfully'
-    }
-
 @app.route('/family/<identifier>', methods=['GET'])
 def get_sequences(identifier):
     """
-    Get sequences by identifier from S3 .sto file
+    Get Stockholm file content by identifier from S3
     URL pattern: /family/{identifier}
-    Returns: JSON in MSA component expected format
+    Returns: Raw Stockholm file content as plain text
     """
     try:
         # Get .sto file content from S3
         sto_content = get_sto_file_from_s3(identifier)
         
-        # Parse the Stockholm file content
-        sequence_data = parse_stockholm_file(sto_content)
-        
-        if not sequence_data:
+        if not sto_content.strip():
             return jsonify({
                 'status': 'error',
-                'message': f'No sequence data found for identifier {identifier}',
+                'message': f'No content found for identifier {identifier}',
                 'data': None
             }), 404
         
-        # Format the response for the MSA component
-        response = format_msa_response(sequence_data, identifier)
-        return jsonify(response)
+        # Return raw Stockholm content as plain text
+        return Response(
+            sto_content,
+            mimetype='text/plain',
+            headers={
+                'Content-Disposition': f'inline; filename="{identifier.lower()}.sto"'
+            }
+        )
     
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Failed to retrieve sequences for {identifier}: {str(e)}',
+            'message': f'Failed to retrieve Stockholm file for {identifier}: {str(e)}',
             'data': None
         }), 500
 
@@ -100,13 +82,13 @@ def home():
         'message': 'RNA Sequence API',
         'data': {
             'endpoints': {
-                'sequences': '/family/{identifier}',
+                'stockholm_file': '/family/{identifier}',
                 'health': '/health'
             },
             'examples': {
-                'msa_format': '/family/RF03116',
+                'stockholm_format': '/family/RF03116',
             },
-            'description': 'API for RNA multiple sequence alignment data'
+            'description': 'API for RNA Stockholm alignment files - returns raw .sto file content'
         }
     })
 

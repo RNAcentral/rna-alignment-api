@@ -1,6 +1,6 @@
 Flask==2.3.3
 Flask-CORS==4.0.0
-Werkzeug==2.3.7
-biopython
-boto3
-python-dotenv
+biopython==1.81
+boto3==1.28.85
+python-dotenv==1.0.0
+gunicorn==21.2.0

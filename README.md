@@ -42,13 +42,6 @@ The API will run on `http://localhost:5000` by default.
 - **Example:** `GET /family/RF03116`
 - **Note:** The identifier is converted to lowercase when fetching from S3 (e.g., `RF03116` → `rf03116.sto`)
 
-### Get Raw Sequences
-
-- **URL:** `/family/{identifier}/raw`
-- **Method:** GET
-- **Description:** Returns sequences in raw JSON format
-- **Example:** `GET /family/RF03116/raw`
-
 ### Health Check
 
 - **URL:** `/health`
@@ -109,8 +102,8 @@ The API expects files to be organized as follows:
 ebi-rnacentral/
 └── dev/
     └── alignments/
+        ├── rf03116.sto
         ├── rf00001.sto
-        ├── rf00002.sto
         └── ...
 ```
 

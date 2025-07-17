@@ -1,19 +1,15 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, Response
 from flask_cors import CORS
 import os
-from utils.sto_parser import parse_stockholm_file
 import boto3
 from dotenv import load_dotenv
+from utils.sto_parser import parse_stockholm_file
 
 # Load environment variables from .env file
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
-
-# Sample data - remove this since we're loading from S3 dynamically
-# sto_file = 'rf03116.sto'
-# sequence_data = parse_stockholm_file(sto_file)
 
 # Create S3 client
 s3_client = boto3.client(
@@ -36,77 +32,92 @@ def get_sto_file_from_s3(identifier):
     except Exception as e:
         raise Exception(f"Failed to retrieve {object_key} from S3: {str(e)}")
 
-def format_msa_response(sequences, identifier):
-    """
-    Format sequences into the expected MSA component format
-    """
-    return {
-        'status': 'success',
-        'data': {
-            'sequences': sequences,
-            'metadata': {
-                'title': f'{identifier} RNA Family',
-                'description': f'Multiple sequence alignment for RNA family {identifier}',
-                'source': f'S3: ebi-rnacentral/dev/alignments/{identifier.lower()}.sto',
-                'count': len(sequences),
-                'identifier': identifier
-            }
-        },
-        'message': 'Data loaded successfully'
-    }
-
 @app.route('/family/<identifier>', methods=['GET'])
-def get_sequences(identifier):
+def get_msa_data(identifier):
     """
-    Get sequences by identifier from S3 .sto file
+    Get MSA data by identifier from S3, parsed and formatted for the MSA viewer.
     URL pattern: /family/{identifier}
-    Returns: JSON in MSA component expected format
+    Returns: JSON data structure ready for MSA viewer consumption
     """
     try:
         # Get .sto file content from S3
         sto_content = get_sto_file_from_s3(identifier)
         
-        # Parse the Stockholm file content
-        sequence_data = parse_stockholm_file(sto_content)
-        
-        if not sequence_data:
+        if not sto_content.strip():
             return jsonify({
                 'status': 'error',
-                'message': f'No sequence data found for identifier {identifier}',
+                'message': f'No content found for identifier {identifier}',
                 'data': None
             }), 404
         
-        # Format the response for the MSA component
-        response = format_msa_response(sequence_data, identifier)
-        return jsonify(response)
+        # Parse Stockholm content and format for MSA viewer
+        msa_data = parse_stockholm_file(sto_content)
+        
+        # Add metadata
+        response_data = {
+            'status': 'success',
+            'message': f'MSA data retrieved successfully for {identifier}',
+            'data': {
+                'identifier': identifier,
+                'sequences': msa_data['sequences'],
+                'reference': msa_data.get('reference'),
+                'secondaryStructure': msa_data.get('secondaryStructure'),
+                'metadata': {
+                    'sequenceCount': len(msa_data['sequences']),
+                    'sequenceLength': len(msa_data['sequences'][0]['sequence']) if msa_data['sequences'] else 0,
+                    'hasReference': bool(msa_data.get('reference')),
+                    'hasSecondaryStructure': bool(msa_data.get('secondaryStructure'))
+                }
+            }
+        }
+        
+        return jsonify(response_data)
+    
+    except ValueError as e:
+        return jsonify({
+            'status': 'error',
+            'message': f'Invalid Stockholm format for {identifier}: {str(e)}',
+            'data': None
+        }), 400
     
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Failed to retrieve sequences for {identifier}: {str(e)}',
+            'message': f'Failed to retrieve and parse Stockholm file for {identifier}: {str(e)}',
             'data': None
         }), 500
 
 @app.route('/family/<identifier>/raw', methods=['GET'])
-def get_sequences_raw(identifier):
+def get_raw_stockholm(identifier):
     """
-    Get sequences in raw format from S3 .sto file
+    Get raw Stockholm file content by identifier from S3.
     URL pattern: /family/{identifier}/raw
-    Returns: JSON array of sequence objects
+    Returns: Raw Stockholm file content as plain text
     """
     try:
         # Get .sto file content from S3
         sto_content = get_sto_file_from_s3(identifier)
         
-        # Parse the Stockholm file content
-        sequence_data = parse_stockholm_file(sto_content)
+        if not sto_content.strip():
+            return jsonify({
+                'status': 'error',
+                'message': f'No content found for identifier {identifier}',
+                'data': None
+            }), 404
         
-        return jsonify(sequence_data)
+        # Return raw Stockholm content as plain text
+        return Response(
+            sto_content,
+            mimetype='text/plain',
+            headers={
+                'Content-Disposition': f'inline; filename="{identifier.lower()}.sto"'
+            }
+        )
     
     except Exception as e:
         return jsonify({
             'status': 'error',
-            'message': f'Failed to retrieve raw sequences for {identifier}: {str(e)}',
+            'message': f'Failed to retrieve Stockholm file for {identifier}: {str(e)}',
             'data': None
         }), 500
 
@@ -117,9 +128,8 @@ def health_check():
         'status': 'success',
         'message': 'API is running',
         'data': {
-            'service': 'RNA Sequence API',
-            'version': '1.0.0',
-            'source': 'S3: ebi-rnacentral/dev/alignments/'
+            'version': '2.0',
+            'features': ['stockholm_parsing', 'secondary_structure', 'base_pairs']
         }
     })
 
@@ -128,18 +138,23 @@ def home():
     """Home endpoint with usage information"""
     return jsonify({
         'status': 'success',
-        'message': 'RNA Sequence API',
+        'message': 'RNA Multiple Sequence Alignment API v2.0',
         'data': {
             'endpoints': {
-                'sequences': '/family/{identifier}',
-                'raw_sequences': '/family/{identifier}/raw',
+                'msa_data': '/family/{identifier}',
+                'raw_stockholm': '/family/{identifier}/raw',
                 'health': '/health'
             },
             'examples': {
-                'msa_format': '/family/RF03116',
-                'raw_format': '/family/RF03116/raw'
+                'parsed_msa_data': '/family/RF03116',
+                'raw_stockholm_file': '/family/RF03116/raw'
             },
-            'description': 'API for RNA multiple sequence alignment data'
+            'description': 'API for RNA Stockholm alignment files - returns parsed MSA data or raw .sto content',
+            'data_format': {
+                'sequences': 'Array of {name, sequence} objects',
+                'reference': 'Reference sequence string (if available)',
+                'secondaryStructure': 'Object with consensus, features, and basePairs (if available)'
+            }
         }
     })
 
@@ -162,12 +177,5 @@ def internal_error(error):
     }), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
-    
-    print(f"Starting RNA Sequence API on port {port}")
-    print(f"MSA format: http://localhost:{port}/family/RF03116")
-    print(f"Raw format: http://localhost:{port}/family/RF03116/raw")
-    print(f"Health check: http://localhost:{port}/health")
-    
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)

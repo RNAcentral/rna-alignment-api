@@ -153,7 +153,7 @@ def home():
             'data_format': {
                 'sequences': 'Array of {name, sequence} objects',
                 'reference': 'Reference sequence string (if available)',
-                'secondaryStructure': 'Object with consensus, features, and basePairs (if available)'
+                'secondaryStructure': 'Object with consensus and basePairs (if available)'
             }
         }
     })

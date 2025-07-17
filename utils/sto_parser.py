@@ -74,71 +74,22 @@ def parse_stockholm_file(content):
 
 def parse_secondary_structure(consensus):
     """
-    Parse secondary structure consensus string and return features and base pairs.
+    Parse secondary structure consensus string and base pairs.
     
     Args:
         consensus (str): Secondary structure consensus string (e.g., "<<<___>>>")
     
     Returns:
-        dict: Secondary structure data with consensus, features, and basePairs
+        dict: Secondary structure data with consensus and basePairs
     """
-    features = []
     base_pairs = []
     
-    # Parse features (stems and loops)
-    current_feature = None
-    
-    for i, char in enumerate(consensus):
-        position = i + 1  # 1-based position
-        
-        # Determine feature type
-        if char in '<>':
-            feature_type = 'stem'
-        elif char == '_':
-            feature_type = 'loop'
-        elif char == ':':
-            feature_type = 'single_strand'
-        else:
-            feature_type = 'single_strand'
-        
-        # Check if we need to start a new feature
-        if not current_feature or current_feature['type'] != feature_type:
-            # End the current feature if it exists
-            if current_feature:
-                features.append({
-                    'start': current_feature['start'],
-                    'end': position - 1,
-                    'type': current_feature['type'],
-                    'description': get_feature_description(current_feature['type'])
-                })
-            
-            # Start a new feature
-            current_feature = {
-                'start': position,
-                'type': feature_type
-            }
-    
-    # Close any remaining feature
-    if current_feature:
-        features.append({
-            'start': current_feature['start'],
-            'end': len(consensus),
-            'type': current_feature['type'],
-            'description': get_feature_description(current_feature['type'])
-        })
-    
-    # Filter to only include stem and loop features (length >= 2)
-    filtered_features = [
-        feature for feature in features 
-        if feature['type'] in ['stem', 'loop'] and feature['end'] - feature['start'] >= 1
-    ]
-    
+   
     # Generate base pairs from < and > symbols
     base_pairs = generate_base_pair_links(consensus)
     
     return {
         'consensus': consensus,
-        'features': filtered_features,
         'basePairs': base_pairs
     }
 
@@ -206,5 +157,4 @@ if __name__ == "__main__":
     if msa_data.get('secondaryStructure'):
         ss = msa_data['secondaryStructure']
         print("  Consensus length:", len(ss['consensus']))
-        print("  Features:", len(ss['features']))
         print("  Base pairs:", len(ss['basePairs']))

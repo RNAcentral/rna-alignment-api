@@ -38,9 +38,9 @@ def get_msa_data(identifier):
             'message': f'MSA data retrieved successfully for {identifier}',
             'data': {
                 'identifier': identifier,
-                'sequences': msa_data['sequences'],
-                'reference': msa_data.get('reference'),
-                'secondaryStructure': msa_data.get('secondaryStructure')
+                'consensus': msa_data['consensus'],
+                'notation': msa_data.get('notation'),
+                'sequences': msa_data.get('sequences')
             }
         }
         

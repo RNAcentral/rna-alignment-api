@@ -10,7 +10,7 @@ def parse_stockholm_file(content):
         content (str): Stockholm format content as string
     
     Returns:
-        dict: Complete MSA data structure with sequences, reference, and secondary structure
+        dict: Complete MSA data structure with sequences, consensus, and notation
     """
     # Debug: Check if content looks like Stockholm format
     if not content.strip():
@@ -55,12 +55,12 @@ def parse_stockholm_file(content):
         # Build result structure
         result = {
             'sequences': sequences,
-            'reference': reference_sequence if reference_sequence else None
+            'consensus': reference_sequence if reference_sequence else None
         }
         
         # Parse secondary structure if available
         if secondary_structure_consensus:
-            result['secondaryStructure'] = parse_secondary_structure(secondary_structure_consensus)
+            result['notation'] = parse_secondary_structure(secondary_structure_consensus)
         
         return result
     
@@ -125,36 +125,3 @@ def generate_base_pair_links(consensus):
                 })
     
     return base_pairs
-
-def get_feature_description(feature_type):
-    """
-    Get human-readable description for feature type.
-    
-    Args:
-        feature_type (str): Feature type ('stem', 'loop', etc.)
-    
-    Returns:
-        str: Human-readable description
-    """
-    descriptions = {
-        'stem': 'STEM',
-        'loop': 'LOOP',
-        'single_strand': 'Single Strand'
-    }
-    return descriptions.get(feature_type, 'RNA structural element')
-
-# Example usage:
-if __name__ == "__main__":
-    with open("your_file.sto", "r") as f:
-        content = f.read()
-    
-    msa_data = parse_stockholm_file(content)
-    
-    print("Sequences:", len(msa_data['sequences']))
-    print("Reference:", bool(msa_data.get('reference')))
-    print("Secondary Structure:", bool(msa_data.get('secondaryStructure')))
-    
-    if msa_data.get('secondaryStructure'):
-        ss = msa_data['secondaryStructure']
-        print("  Consensus length:", len(ss['consensus']))
-        print("  Base pairs:", len(ss['basePairs']))

@@ -1,4 +1,3 @@
-
 import boto3
 import os
 from dotenv import load_dotenv
@@ -14,12 +13,24 @@ s3_client = boto3.client(
     aws_secret_access_key=os.getenv('S3_SECRET')
 )
 
-def list_buckets():
-    response = s3_client.list_buckets()
-    for bucket in response['Buckets']:
-        print(bucket['Name'])
-
-def list_objects(bucket_name):
-    response = s3_client.list_objects_v2(Bucket=bucket_name)
-    for obj in response.get('Contents', []):
-        print(obj['Key'])
+def get_sto_file_from_s3(identifier):
+    """
+    Get .sto file from S3 bucket ebi-rnacentral/dev/alignments/
+    
+    Args:
+        identifier (str): The identifier for the Stockholm file
+        
+    Returns:
+        str: Content of the Stockholm file
+        
+    Raises:
+        Exception: If file retrieval fails
+    """
+    bucket_name = 'ebi-rnacentral'
+    object_key = f'{os.getenv("ENVIRONMENT")}/alignments/{identifier.lower()}.sto'
+    
+    try:
+        response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
+        return response['Body'].read().decode('utf-8')
+    except Exception as e:
+        raise Exception(f"Failed to retrieve {object_key} from S3: {str(e)}")

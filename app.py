@@ -3,7 +3,7 @@ from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 from utils.sto_parser import parse_stockholm_file
-from utils.s3 import get_sto_file_from_s3
+from utils.s3 import get_seed_file_from_s3
 
 # Load environment variables from .env file
 load_dotenv()
@@ -20,7 +20,7 @@ def get_msa_data(identifier):
     """
     try:
         # Get .sto file content from S3
-        sto_content = get_sto_file_from_s3(identifier)
+        sto_content = get_seed_file_from_s3(identifier)
         
         if not sto_content.strip():
             return jsonify({

@@ -66,10 +66,6 @@ def parse_stockholm_file(content):
     
     except Exception as e:
         # Debug info
-        lines = content.split('\n')
-        print(f"Content preview (first 5 lines):")
-        for i, line in enumerate(lines[:5]):
-            print(f"Line {i+1}: {repr(line)}")
         raise e
 
 def parse_secondary_structure(consensus):
@@ -119,9 +115,7 @@ def generate_base_pair_links(consensus):
                 base_pairs.append({
                     'x': open_pos,
                     'y': position,
-                    'a': 0,
-                    'b': 8,
-                    'score': 0.99
+                    'score': 1
                 })
     
     return base_pairs

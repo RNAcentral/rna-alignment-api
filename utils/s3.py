@@ -13,21 +13,21 @@ s3_client = boto3.client(
     aws_secret_access_key=os.getenv('S3_SECRET')
 )
 
-def get_sto_file_from_s3(identifier):
+def get_seed_file_from_s3(identifier):
     """
-    Get .sto file from S3 bucket ebi-rnacentral/dev/alignments/
+    Get SEED file from S3 bucket using environment variables
     
     Args:
-        identifier (str): The identifier for the Stockholm file
+        identifier (str): The identifier for the SEED file
         
     Returns:
-        str: Content of the Stockholm file
+        str: Content of the SEED file
         
     Raises:
         Exception: If file retrieval fails
     """
-    bucket_name = 'ebi-rnacentral'
-    object_key = f'{os.getenv("ENVIRONMENT")}/alignments/{identifier.lower()}.sto'
+    bucket_name = os.getenv('BUCKET_NAME')
+    object_key = f'{os.getenv("ENVIRONMENT")}/{os.getenv("S3_BASE_PATH")}/{identifier}/SEED'
     
     try:
         response = s3_client.get_object(Bucket=bucket_name, Key=object_key)

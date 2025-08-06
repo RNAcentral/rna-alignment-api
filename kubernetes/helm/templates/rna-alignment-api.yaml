@@ -1,17 +1,6 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: rna-api-secrets
-  namespace: rna-alignment
-type: Opaque
-stringData:
-  S3_HOST: {{ .Values.s3.host }}
-  S3_KEY: {{ .Values.s3.key }}
-  S3_SECRET: {{ .Values.s3.secret }}
----
-apiVersion: v1
-kind: Secret
-metadata:
   name: github-registry-secret
   namespace: rna-alignment
 type: kubernetes.io/dockerconfigjson
@@ -50,18 +39,20 @@ spec:
         - name: S3_HOST
           valueFrom:
             secretKeyRef:
-              name: rna-api-secrets
+              name: rna-alignment-viewer
               key: S3_HOST
         - name: S3_KEY
           valueFrom:
             secretKeyRef:
-              name: rna-api-secrets
+              name: rna-alignment-viewer
               key: S3_KEY
         - name: S3_SECRET
           valueFrom:
             secretKeyRef:
-              name: rna-api-secrets
+              name: rna-alignment-viewer
               key: S3_SECRET
+        - name: ENVIRONMENT
+          value: {{ .Values.environment }}
         resources:
           requests:
             memory: "256Mi"

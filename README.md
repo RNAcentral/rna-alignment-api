@@ -18,6 +18,7 @@ Create a `.env` file in the project root with your S3 credentials:
 S3_HOST=https://uk1s3.embassy.ebi.ac.uk
 S3_KEY=your_access_key
 S3_SECRET=your_secret_key
+ENVIRONMENT=dev
 ```
 
 The API expects Stockholm files to be stored in the S3 bucket `ebi-rnacentral` under the path `dev/alignments/`.

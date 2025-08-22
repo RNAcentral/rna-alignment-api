@@ -105,17 +105,26 @@ def generate_base_pair_links(consensus):
     for i, char in enumerate(consensus):
         position = i + 1  # Convert to 1-based position
         
-        if char == '<':
-            # Push position of opening bracket
-            open_brackets.append(position)
-        elif char == '>':
-            # Match with most recent opening bracket
+        if char in '<([{':
+            # Push position and type of opening bracket
+            open_brackets.append((position, char))
+        elif char in '>)]}':
+            # Define matching pairs
+            matches = {'>': '<', ')': '(', ']': '[', '}': '{'}
+            
+            # Match with most recent opening bracket of correct type
             if open_brackets:
-                open_pos = open_brackets.pop()
-                base_pairs.append({
-                    'x': open_pos,
-                    'y': position,
-                    'score': 1
-                })
+                # Find the most recent matching opening bracket
+                for j in range(len(open_brackets) - 1, -1, -1):
+                    open_pos, open_char = open_brackets[j]
+                    if open_char == matches[char]:
+                        # Remove the matched opening bracket
+                        open_brackets.pop(j)
+                        base_pairs.append({
+                            'x': open_pos,
+                            'y': position,
+                            'score': 1
+                        })
+                        break
     
     return base_pairs

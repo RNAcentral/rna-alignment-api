@@ -43,7 +43,6 @@ The API will run on `http://localhost:5000` by default.
 - **Method:** GET
 - **Description:** Returns RNA sequences in MSA component format
 - **Example:** `GET /RF03116`
-- **Note:** The identifier is converted to lowercase when fetching from S3 (e.g., `RF03116` → `rf03116.sto`)
 
 
 ## Example Response
@@ -69,15 +68,29 @@ The API will run on `http://localhost:5000` by default.
 
 ## S3 File Structure
 
-The API expects files to be organized as follows:
+The API expects files to be organized as follows, with the SEED files containing the Stockholm data:
 
 ```
 ebi-rnacentral/
 └── dev/
     └── alignments/
-        ├── rf03116.sto
-        ├── rf00001.sto
-        └── ...
+        ├── RF00001/
+            └── SEED
+        ├── RF00002/
+            └── SEED
 ```
 
-Stockholm files should be in lowercase and follow the naming convention `{identifier}.sto`.
+
+## Docker and Kubernetes
+
+The code is Dockerized and can be deployed on a kubernetes cluster with secrets for S3_HOST, S3_KEY and S3_SECRET. The Dockerfile can be built and pushed with:
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64 -t ghcr.io/rnacentral/rna-alignment-api:latest --push .
+```
+It can then be deployed with:
+
+```bash
+cd kubernetes/helm
+helm install rna-alignment-api-full . -n rna-alignment  
+```

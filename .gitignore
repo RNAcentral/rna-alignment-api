@@ -5,5 +5,3 @@ __pycache__/
 *.pyo
 *.pyd
 .env
-kubernetes/helm/values.yaml
-kubernetes/helm/rna-alignment-viewer-secret.yaml

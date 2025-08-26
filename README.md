@@ -18,7 +18,9 @@ Create a `.env` file in the project root with your S3 credentials:
 S3_HOST=https://uk1s3.embassy.ebi.ac.uk
 S3_KEY=your_access_key
 S3_SECRET=your_secret_key
+BUCKET_NAME=ebi-rnacentral
 ENVIRONMENT=dev
+S3_BASE_PATH=alignments
 ```
 
 The API expects Stockholm files to be stored in the S3 bucket `ebi-rnacentral` under the path `dev/alignments/`.
@@ -35,41 +37,14 @@ The API will run on `http://localhost:5000` by default.
 
 ## API Endpoints
 
-### Get RNA Family Sequences
+### Get RNA Alignment Sequences
 
-- **URL:** `/family/{identifier}`
+- **URL:** `/{identifier}`
 - **Method:** GET
 - **Description:** Returns RNA sequences in MSA component format
-- **Example:** `GET /family/RF03116`
+- **Example:** `GET /RF03116`
 - **Note:** The identifier is converted to lowercase when fetching from S3 (e.g., `RF03116` → `rf03116.sto`)
 
-### Health Check
-
-- **URL:** `/health`
-- **Method:** GET
-- **Description:** Check if the API is running
-
-### Home
-
-- **URL:** `/`
-- **Method:** GET
-- **Description:** API information and usage examples
-
-## Environment Variables
-
-- `PORT`: Server port (default: 5000)
-- `DEBUG`: Enable debug mode (default: False)
-- `S3_HOST`: S3 endpoint URL
-- `S3_KEY`: S3 access key
-- `S3_SECRET`: S3 secret key
-
-## Dependencies
-
-- Flask
-- Flask-CORS
-- Biopython
-- boto3
-- python-dotenv
 
 ## Example Response
 
@@ -77,22 +52,19 @@ The API will run on `http://localhost:5000` by default.
 {
   "status": "success",
   "data": {
+    "consensus": "ccc.gcc..cggGU.CUGUGGuuGaA.................................................................................AGUCgAcGcC.agccGcgGgCa.AAacGAuCCAcgUAacccccca............................aaaau................................................................................................gggggguGAccAUGgcgCggc....................................uUAGAaGUA.AGuC.cug.C.Cgccc..............................aaaaa...............................................................................................gggcGAGAGgg.cua.gUA..guGagg.ggcaaaa............................................................gccuauuA...gcgAAagccCCa..Gcag.....GCGAGU.gUGGG.GuCAAA.aaCCAG.GUCAGccg..g.gcggg",
+    "identifier": "RF03072",
+    "notation": {
+      "basePairs": [
+        {"score": 1, "x": 316, "y": 327},
+        {"score": 1, "x": 151, "y": 682}
+      ],
+      "consensus": "[[[.[[[..[[[--.[[[[[[[[---................................................................................."
+    },
     "sequences": [
       {
-        "name": "sequence_id",
-        "sequence": "ACGTACGT..."
-      }
-    ],
-    "metadata": {
-      "title": "RF03116 RNA Family",
-      "description": "Multiple sequence alignment for RNA family RF03116",
-      "source": "S3: ebi-rnacentral/dev/alignments/rf03116.sto",
-      "count": 42,
-      "identifier": "RF03116"
-    }
-  },
-  "message": "Data loaded successfully"
-}
+        "name": "URS0000D6BF59_12908/1-314",
+        "sequence": "GAA-CGC--CCGGU-CUGUCGGUGAA---------------------------------------------------------------------------------AAGCGAUGCG-AGACCGGCGCG-AAACGCUCUCAGUAAUCCUCCGcacuccgg--------------------UCCGCuuagcacggaguccgagaguggcagagcuccguaaauucggaguucgcuauucgaccacaugc-------------------------ucgga---AGGAGGAGAUCAUGGCCGGGCcggccugggcugccgaagcucagcagcucugaagucCUUUGUGUA-AGUC-GCG-C-CGCC------------------------
 ```
 
 ## S3 File Structure

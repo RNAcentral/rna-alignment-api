@@ -1,0 +1,3 @@
+image: ghcr.io/rnacentral/rna-alignment-api:latest
+replicas: 1
+environment: dev

@@ -1,4 +1,4 @@
 image: ghcr.io/rnacentral/rna-alignment-api:latest
 replicas: 1
-environment: prod
-nodePort: 30081
+environment: dev
+nodePort: 30082
